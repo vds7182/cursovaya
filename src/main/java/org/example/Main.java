@@ -46,7 +46,10 @@ public class Main extends JFrame {
             this.setVisible(false);
             ProductManagement.showProductManagement(this);
         });
-
+        warehouseBtn.addActionListener(e -> {
+            this.setVisible(false);
+            WarehouseManagement.showWarehouseManagement(this);
+        });
         add(mainPanel);
     }
 

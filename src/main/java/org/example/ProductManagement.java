@@ -365,33 +365,71 @@ public class ProductManagement extends JFrame {
         }
     }
 
-    private void saveProduct(String name, String description, double price, File imageFile) throws SQLException, IOException {
+    private void saveProduct(String name, String description, double price, File imageFile) throws Exception {
         try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cyrsova", "root", "")) {
-            String sql = "INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+            // Починаємо транзакцію
+            conn.setAutoCommit(false);
 
-            pstmt.setString(1, name);
-            pstmt.setString(2, description);
-            pstmt.setDouble(3, price);
+            try {
+                // 1. Додаємо продукт
+                String productSql = "INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)";
+                PreparedStatement productStmt = conn.prepareStatement(productSql, Statement.RETURN_GENERATED_KEYS);
 
-            if (imageFile != null && imageFile.exists()) {
-                try (InputStream is = new FileInputStream(imageFile);
-                     ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+                productStmt.setString(1, name);
+                productStmt.setString(2, description);
+                productStmt.setDouble(3, price);
 
-                    byte[] data = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = is.read(data, 0, data.length)) != -1) {
-                        buffer.write(data, 0, bytesRead);
+                if (imageFile != null && imageFile.exists()) {
+                    try (InputStream is = new FileInputStream(imageFile);
+                         ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+
+                        byte[] data = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = is.read(data, 0, data.length)) != -1) {
+                            buffer.write(data, 0, bytesRead);
+                        }
+                        buffer.flush();
+                        productStmt.setBytes(4, buffer.toByteArray());
                     }
-                    buffer.flush();
-                    pstmt.setBytes(4, buffer.toByteArray());
+                } else {
+                    productStmt.setNull(4, Types.BLOB);
                 }
-            } else {
-                pstmt.setNull(4, Types.BLOB);
-            }
 
-            pstmt.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Продукт успішно додано!", "Успіх", JOptionPane.INFORMATION_MESSAGE);
+                // Виконуємо запит
+                int affectedRows = productStmt.executeUpdate();
+                if (affectedRows == 0) {
+                    throw new SQLException("Не вдалося створити продукт");
+                }
+
+                // Отримуємо згенерований ID
+                try (ResultSet generatedKeys = productStmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int productId = generatedKeys.getInt(1);
+
+                        // 2. Додаємо запис у інвентар
+                        String inventorySql = "INSERT INTO inventory (product_id, quantity, location) VALUES (?, 0, 'Новий')";
+                        try (PreparedStatement inventoryStmt = conn.prepareStatement(inventorySql)) {
+                            inventoryStmt.setInt(1, productId);
+                            inventoryStmt.executeUpdate();
+                        }
+
+                        // Підтверджуємо транзакцію
+                        conn.commit();
+
+                        JOptionPane.showMessageDialog(this,
+                                "Продукт успішно додано! ID: " + productId,
+                                "Успіх", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        throw new SQLException("Не вдалося отримати ID продукту");
+                    }
+                }
+            } catch (Exception e) {
+                // Відкатуємо транзакцію у разі помилки
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
     }
 
