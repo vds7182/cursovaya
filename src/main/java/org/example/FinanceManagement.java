@@ -70,17 +70,7 @@ public class FinanceManagement extends JFrame {
         statsPanel.add(balanceLabel, BorderLayout.NORTH);
 
         // Графік (заглушка)
-        chartPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                // Тут буде логіка малювання графіка
-                g.setColor(Color.BLUE);
-                g.drawString("Графік доходів/витрат буде тут", 50, 50);
-            }
-        };
-        chartPanel.setPreferredSize(new Dimension(300, 300));
-        statsPanel.add(chartPanel, BorderLayout.CENTER);
+
 
         mainPanel.add(tableScroll);
         mainPanel.add(statsPanel);

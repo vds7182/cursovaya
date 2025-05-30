@@ -1,13 +1,20 @@
 package org.example;
 
-import org.example.ProductManagement;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.sql.Connection;
 
 public class Main extends JFrame {
-    public Main() {
+    private Connection dbConnection;
+
+    public Main(Connection connection) {
+        this.dbConnection = connection;
+        initializeUI();
+    }
+
+    private void initializeUI() {
         setTitle("Головне меню");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,11 +48,12 @@ public class Main extends JFrame {
         mainPanel.add(financeBtn, gbc);
         mainPanel.add(reportsBtn, gbc);
 
-        // Обробник кнопки управління продуктами
+        // Обробники подій
         productsBtn.addActionListener(e -> {
             this.setVisible(false);
             ProductManagement.showProductManagement(this);
         });
+
         warehouseBtn.addActionListener(e -> {
             this.setVisible(false);
             WarehouseManagement.showWarehouseManagement(this);
@@ -55,6 +63,12 @@ public class Main extends JFrame {
             this.setVisible(false);
             FinanceManagement.showFinanceManagement(this);
         });
+
+        reportsBtn.addActionListener(e -> {
+            this.setVisible(false);
+            zvitmenu.showReportsManagement(this, dbConnection);
+        });
+
         add(mainPanel);
     }
 
@@ -69,21 +83,33 @@ public class Main extends JFrame {
         return button;
     }
 
-    public void returnToMainMenu() {
-        this.setVisible(true);
-    }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
                 // Встановлюємо системний вигляд
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+                // Отримуємо підключення до БД
+                Connection connection = DatabaseConnector.getConnection();
+
+                // Створюємо головне меню
+                Main mainMenu = new Main(connection);
+                mainMenu.setVisible(true);
+
+                // Додаємо обробник закриття вікна
+                mainMenu.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        DatabaseConnector.closeConnection(connection);
+                    }
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
+                JOptionPane.showMessageDialog(null,
+                        "Помилка ініціалізації: " + e.getMessage(),
+                        "Помилка", JOptionPane.ERROR_MESSAGE);
             }
-
-            Main mainMenu = new Main();
-            mainMenu.setVisible(true);
         });
     }
 }
