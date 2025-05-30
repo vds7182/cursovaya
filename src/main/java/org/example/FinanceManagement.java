@@ -5,9 +5,11 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.sql.*;
 import java.text.*;
 import java.util.*;
+import java.util.logging.*;
 
 public class FinanceManagement extends JFrame {
     private JTable transactionsTable;
@@ -15,8 +17,37 @@ public class FinanceManagement extends JFrame {
     private JComboBox<String> periodCombo;
     private JLabel balanceLabel;
     private JPanel chartPanel;
+    static Logger LOGGER;
 
+    static{
+        try {
+            // Налаштування логування
+            LOGGER = Logger.getLogger(Main.class.getName());
+            LOGGER.setLevel(Level.ALL); // Встановлюємо рівень логування
+
+            // Вимкнути використання батьківських обробників
+            LOGGER.setUseParentHandlers(false);
+
+            // Створюємо обробник для консолі
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            consoleHandler.setLevel(Level.ALL);
+            consoleHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(consoleHandler);
+
+            // Створюємо обробник для файлу
+            FileHandler fileHandler = new FileHandler("supermarket.log", true);
+            fileHandler.setLevel(Level.ALL);
+            fileHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(fileHandler);
+
+            LOGGER.info("Логування успішно налаштовано");
+        } catch (IOException e) {
+            System.err.println("Не вдалося налаштувати логування у файл: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     public FinanceManagement(JFrame mainMenu) {
+
         setTitle("Управління фінансами");
         setSize(1200, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -33,7 +64,7 @@ public class FinanceManagement extends JFrame {
         addButton = createStyledButton("＋ Додати транзакцію", new Color(34, 139, 34));
         buttonPanel.add(backButton);
         buttonPanel.add(addButton);
-
+        buttonPanel.setBackground(new Color(22, 31, 53));
         // Панель фільтрів
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         String[] periods = {"Сьогодні", "Цей тиждень", "Цей місяць", "Цей рік", "Усі"};
@@ -297,6 +328,7 @@ public class FinanceManagement extends JFrame {
                 loadTransactions();
                 updateBalance();
                 dialog.dispose();
+                LOGGER.log(Level.INFO, "Користувач успішно додав нову транзакцію");
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Введіть коректну суму", "Помилка", JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {

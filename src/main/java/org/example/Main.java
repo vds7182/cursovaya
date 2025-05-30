@@ -1,5 +1,8 @@
 package org.example;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.logging.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -7,6 +10,36 @@ import java.awt.event.WindowEvent;
 import java.sql.Connection;
 
 public class Main extends JFrame {
+    static Logger LOGGER;
+
+    static {
+        try {
+            // Налаштування логування
+            LOGGER = Logger.getLogger(Main.class.getName());
+            LOGGER.setLevel(Level.ALL); // Встановлюємо рівень логування
+
+            // Вимкнути використання батьківських обробників
+            LOGGER.setUseParentHandlers(false);
+
+            // Створюємо обробник для консолі
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            consoleHandler.setLevel(Level.ALL);
+            consoleHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(consoleHandler);
+
+            // Створюємо обробник для файлу
+            FileHandler fileHandler = new FileHandler("supermarket.log", true);
+            fileHandler.setLevel(Level.ALL);
+            fileHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(fileHandler);
+
+            LOGGER.info("Логування успішно налаштовано");
+        } catch (IOException e) {
+            System.err.println("Не вдалося налаштувати логування у файл: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private Connection dbConnection;
 
     public Main(Connection connection) {
@@ -15,6 +48,7 @@ public class Main extends JFrame {
     }
 
     private void initializeUI() {
+
         setTitle("Головне меню");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -50,21 +84,25 @@ public class Main extends JFrame {
 
         // Обробники подій
         productsBtn.addActionListener(e -> {
+            LOGGER.log(Level.INFO, "Користувач обрав управління продуктами");
             this.setVisible(false);
             ProductManagement.showProductManagement(this);
         });
 
         warehouseBtn.addActionListener(e -> {
+            LOGGER.log(Level.INFO, "Користувач обрав управління складом");
             this.setVisible(false);
             WarehouseManagement.showWarehouseManagement(this);
         });
 
         financeBtn.addActionListener(e -> {
+            LOGGER.log(Level.INFO, "Користувач обрав управління фінансами");
             this.setVisible(false);
             FinanceManagement.showFinanceManagement(this);
         });
 
         reportsBtn.addActionListener(e -> {
+            LOGGER.log(Level.INFO, "Користувач обрав звіти");
             this.setVisible(false);
             zvitmenu.showReportsManagement(this, dbConnection);
         });
@@ -84,6 +122,7 @@ public class Main extends JFrame {
     }
 
     public static void main(String[] args) {
+        LOGGER.log(Level.INFO, "Старт програми");
         SwingUtilities.invokeLater(() -> {
             try {
                 // Встановлюємо системний вигляд

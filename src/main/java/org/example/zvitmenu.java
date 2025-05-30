@@ -35,6 +35,7 @@ public class zvitmenu extends JFrame {
         menuPanel.add(financeButton);
         menuPanel.add(inventoryButton);
         menuPanel.add(productsButton);
+        menuPanel.setBackground(new Color(22, 31, 53));
 
         // Панель з картками для різних звітів
         cardLayout = new CardLayout();
@@ -50,6 +51,7 @@ public class zvitmenu extends JFrame {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         bottomPanel.add(backButton);
         bottomPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
+        bottomPanel.setBackground(new Color(22, 31, 53));
 
         // Додаємо компоненти до фрейму
         add(menuPanel, BorderLayout.NORTH);

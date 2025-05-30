@@ -5,11 +5,42 @@ import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.*;
 
 public class WarehouseManagement extends JFrame {
+    static Logger LOGGER;
+
+    static {
+        try {
+            // Налаштування логування
+            LOGGER = Logger.getLogger(Main.class.getName());
+            LOGGER.setLevel(Level.ALL); // Встановлюємо рівень логування
+
+            // Вимкнути використання батьківських обробників
+            LOGGER.setUseParentHandlers(false);
+
+            // Створюємо обробник для консолі
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            consoleHandler.setLevel(Level.ALL);
+            consoleHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(consoleHandler);
+
+            // Створюємо обробник для файлу
+            FileHandler fileHandler = new FileHandler("supermarket.log", true);
+            fileHandler.setLevel(Level.ALL);
+            fileHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(fileHandler);
+
+            LOGGER.info("Логування успішно налаштовано");
+        } catch (IOException e) {
+            System.err.println("Не вдалося налаштувати логування у файл: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     private JTable inventoryTable;
     private JButton addButton, editButton, deleteButton, backButton;
     private JTextField searchField;
@@ -54,7 +85,7 @@ public class WarehouseManagement extends JFrame {
         inventoryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(inventoryTable);
         add(scrollPane, BorderLayout.CENTER);
-
+        LOGGER.log(Level.INFO, "Успішний вивід данних про склад");
         // Обробники подій
         backButton.addActionListener(e -> {
             this.dispose();
@@ -127,6 +158,7 @@ public class WarehouseManagement extends JFrame {
                         rs.getTimestamp("last_updated")
                 });
             }
+            LOGGER.log(Level.INFO, "Успішна заргрузка продуктів зі складу");
 
             inventoryTable.setModel(model);
             inventoryTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -135,12 +167,14 @@ public class WarehouseManagement extends JFrame {
             inventoryTable.getColumnModel().getColumn(3).setPreferredWidth(150);
 
         } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Помилка завантаження продуктів зі складу");
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Помилка завантаження інвентарю", "Помилка", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void showAddDialog() {
+        LOGGER.log(Level.INFO, "Користувач хоче додати нову інформацію про склад");
         InventoryDialog dialog = new InventoryDialog(this, "Додати новий запис", -1);
         dialog.setVisible(true);
         if (dialog.isSuccess()) {
@@ -149,6 +183,7 @@ public class WarehouseManagement extends JFrame {
     }
 
     private void showEditDialog() {
+        LOGGER.log(Level.INFO, "Користувач хоче змінити інформацію про склад");
         int selectedRow = inventoryTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Виберіть запис для редагування", "Попередження", JOptionPane.WARNING_MESSAGE);
@@ -185,9 +220,12 @@ public class WarehouseManagement extends JFrame {
                     JOptionPane.showMessageDialog(this, "Запис видалено успішно!");
                     loadInventory();
                 }
+                LOGGER.log(Level.INFO, "Користувач видалив обʼєкт зі складу");
             } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Помилка видалення запису");
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Помилка видалення запису", "Помилка", JOptionPane.ERROR_MESSAGE);
+
             }
         }
     }
@@ -357,6 +395,7 @@ public class WarehouseManagement extends JFrame {
                 pstmt.setInt(4, inventoryId);
 
                 pstmt.executeUpdate();
+                LOGGER.log(Level.INFO, "Користувач оновив інформацію про продукт наа складі");
                 JOptionPane.showMessageDialog(this, "Запис оновлено успішно!", "Успіх", JOptionPane.INFORMATION_MESSAGE);
             }
         }

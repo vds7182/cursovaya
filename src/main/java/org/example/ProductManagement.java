@@ -7,6 +7,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.sql.*;
 import java.io.*;
+import java.util.logging.*;
 import javax.imageio.ImageIO;
 
 public class ProductManagement extends JFrame {
@@ -14,8 +15,38 @@ public class ProductManagement extends JFrame {
     private JButton addButton, searchButton, backButton;
     private JPanel productsPanel;
     private JScrollPane scrollPane;
+    static Logger LOGGER;
 
+    static{
+        try {
+            // Налаштування логування
+            LOGGER = Logger.getLogger(Main.class.getName());
+            LOGGER.setLevel(Level.ALL); // Встановлюємо рівень логування
+
+            // Вимкнути використання батьківських обробників
+            LOGGER.setUseParentHandlers(false);
+
+            // Створюємо обробник для консолі
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            consoleHandler.setLevel(Level.ALL);
+            consoleHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(consoleHandler);
+
+            // Створюємо обробник для файлу
+            FileHandler fileHandler = new FileHandler("supermarket.log", true);
+            fileHandler.setLevel(Level.ALL);
+            fileHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(fileHandler);
+
+            LOGGER.info("Логування успішно налаштовано");
+        } catch (IOException e) {
+            System.err.println("Не вдалося налаштувати логування у файл: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     public ProductManagement(JFrame mainMenu) {
+
+
         setTitle("Управління продуктами");
         setSize(1200, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -94,9 +125,11 @@ public class ProductManagement extends JFrame {
                 byte[] imageData = rs.getBytes("image");
 
                 productsPanel.add(createProductCard(id, name, description, price, imageData));
+                LOGGER.log(Level.INFO, "Успішний вивід данних про продукти");
             }
 
         } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Помилка завантаження продуктів");
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Помилка завантаження продуктів", "Помилка", JOptionPane.ERROR_MESSAGE);
         }
@@ -202,6 +235,7 @@ public class ProductManagement extends JFrame {
         if (dialog.isSuccess()) {
             loadProducts(searchField.getText());
         }
+        LOGGER.log(Level.INFO, "Користувач відкрив меню додданя продуктів");
     }
 
     private void showEditDialog(int productId) {
@@ -210,6 +244,7 @@ public class ProductManagement extends JFrame {
         if (dialog.isSuccess()) {
             loadProducts(searchField.getText());
         }
+        LOGGER.log(Level.INFO, "Користувач відкрив меню редагування продуктів");
     }
 
     private void deleteProduct(int productId) {
@@ -227,8 +262,10 @@ public class ProductManagement extends JFrame {
                 if (pstmt.executeUpdate() > 0) {
                     JOptionPane.showMessageDialog(this, "Продукт видалено успішно!");
                     loadProducts(searchField.getText());
+                    LOGGER.log(Level.INFO, "Користувач видалив продукт");
                 }
             } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Помилка видалення продуктів");
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Помилка видалення продукту", "Помилка", JOptionPane.ERROR_MESSAGE);
             }
@@ -398,6 +435,7 @@ public class ProductManagement extends JFrame {
                 // Виконуємо запит
                 int affectedRows = productStmt.executeUpdate();
                 if (affectedRows == 0) {
+                    LOGGER.log(Level.WARNING, "Не вдалося створити продукт");
                     throw new SQLException("Не вдалося створити продукт");
                 }
 
@@ -419,7 +457,13 @@ public class ProductManagement extends JFrame {
                         JOptionPane.showMessageDialog(this,
                                 "Продукт успішно додано! ID: " + productId,
                                 "Успіх", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
+
+
+                        LOGGER.log(Level.INFO, "Користувач додав продукт");
+                    }
+
+                    else {
+                        LOGGER.log(Level.WARNING, "Користувач не додав продукт");
                         throw new SQLException("Не вдалося отримати ID продукту");
                     }
                 }
@@ -469,6 +513,7 @@ public class ProductManagement extends JFrame {
 
             pstmt.setInt(5, id);
             pstmt.executeUpdate();
+            LOGGER.log(Level.INFO, "Користувач оновив продукт");
             JOptionPane.showMessageDialog(this, "Продукт оновлено успішно!", "Успіх", JOptionPane.INFORMATION_MESSAGE);
         }
     }
