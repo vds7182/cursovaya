@@ -9,6 +9,7 @@ import java.sql.*;
 import java.io.*;
 import java.util.logging.*;
 import javax.imageio.ImageIO;
+import java.time.LocalDate;
 
 public class ProductManagement extends JFrame {
     private JTextField searchField;
@@ -409,13 +410,14 @@ public class ProductManagement extends JFrame {
 
             try {
                 // 1. Додаємо продукт
-                String productSql = "INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)";
+                String productSql = "INSERT INTO products (name, description, price, image,add_date) VALUES (?, ?, ?, ?,?)";
                 PreparedStatement productStmt = conn.prepareStatement(productSql, Statement.RETURN_GENERATED_KEYS);
 
+                LocalDate currentDate=LocalDate.now();
                 productStmt.setString(1, name);
                 productStmt.setString(2, description);
                 productStmt.setDouble(3, price);
-
+                productStmt.setDate(5, Date.valueOf(currentDate));
                 if (imageFile != null && imageFile.exists()) {
                     try (InputStream is = new FileInputStream(imageFile);
                          ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {

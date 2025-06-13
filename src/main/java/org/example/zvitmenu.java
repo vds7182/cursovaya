@@ -205,10 +205,29 @@ public class zvitmenu extends JFrame {
         datePanel.add(dateField);
         datePanel.add(showButton);
 
+
+
         // Таблиця для результатів
         JTable table = new JTable();
         JScrollPane scrollPane = new JScrollPane(table);
 
+        showButton.addActionListener(e -> {
+            try {
+                String date = dateField.getText();
+                String query = "SELECT name, description,price,id,add_date" +
+                        "FROM products"+
+                        "WHERE DATE(add_date) LIKE ?";
+
+                PreparedStatement stmt = connection.prepareStatement(query);
+                stmt.setString(1, date);
+                ResultSet rs = stmt.executeQuery();
+
+                table.setModel(DbUtils.resultSetToTableModel(rs));
+
+            } catch (SQLException ex) {
+
+            }
+        });
         // Панель для підсумків
         JLabel totalLabel = new JLabel("Загальна вартість товарів: 0.00");
         JPanel summaryPanel = new JPanel();
